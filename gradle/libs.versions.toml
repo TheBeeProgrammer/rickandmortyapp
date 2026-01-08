@@ -1,6 +1,7 @@
 [versions]
 agp = "8.13.2"
 coilCompose = "2.7.0"
+composeLintChecks = "1.4.2"
 converterGson = "3.0.0"
 coreTesting = "2.2.0"
 hiltAndroid = "2.57.2"
@@ -35,6 +36,7 @@ androidx-core-testing = { module = "androidx.arch.core:core-testing", version.re
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "pagingCompose" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCompose" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }

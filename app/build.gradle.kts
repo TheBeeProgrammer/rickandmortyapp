@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.paging.common.android)
     implementation(libs.androidx.paging.compose)
+    lintChecks(libs.compose.lint.checks)
 
     // --- Debug ---
     debugImplementation(libs.androidx.ui.tooling)
