@@ -13,8 +13,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object MapperModule {
-    @Singleton
     @Provides
+    @Singleton
     fun provideApiCharacterResponseMapper(): Mapper<CharacterListResponse, PaginatedCharacter> {
         return CharacterListResponseMapper()
     }

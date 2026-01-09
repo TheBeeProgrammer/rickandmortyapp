@@ -4,6 +4,7 @@ import com.renato.data.api.RickAndMortyApiService
 import com.renato.data.api.entities.CharacterListResponse
 import com.renato.data.mapper.Mapper
 import com.renato.data.repository.CharacterRepositoryImpl
+import com.renato.domain.IoDispatcher
 import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.repositories.CharacterRepository
 import dagger.Module
@@ -16,11 +17,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-    @Singleton
     @Provides
+    @Singleton
     fun provideCharacterRepository(
         apiService: RickAndMortyApiService,
-        ioDispatcher: CoroutineDispatcher,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
         mapper: Mapper<CharacterListResponse, PaginatedCharacter>
     ): CharacterRepository {
         return CharacterRepositoryImpl(
