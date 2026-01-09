@@ -2,13 +2,17 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+}
+
+hilt {
+    enableAggregatingTask = false
 }
 
 android {
     namespace = "com.renato.domain"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
+
     defaultConfig {
         minSdk = 25
 
@@ -29,8 +33,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlin {
-        jvmToolchain(11)
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 

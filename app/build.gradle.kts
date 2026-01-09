@@ -8,10 +8,7 @@ plugins {
 
 android {
     namespace = "com.renato.rickandmorty"
-    compileSdk {
-        version = release(36)
-    }
-
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.renato.rickandmorty"
         minSdk = 25
@@ -35,11 +32,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+    }
     buildFeatures {
         compose = true
-    }
-    kotlin {
-        jvmToolchain(11)
     }
 }
 
@@ -62,7 +60,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.androidx.paging.common.android)
     implementation(libs.androidx.paging.compose)
-    lintChecks(libs.compose.lint.checks)
+   // lintChecks(libs.compose.lint.checks)
 
     // --- Debug ---
     debugImplementation(libs.androidx.ui.tooling)

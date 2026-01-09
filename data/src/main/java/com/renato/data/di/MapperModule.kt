@@ -4,11 +4,18 @@ import com.renato.data.api.entities.CharacterListResponse
 import com.renato.data.mapper.CharacterListResponseMapper
 import com.renato.data.mapper.Mapper
 import com.renato.domain.model.character.PaginatedCharacter
+import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-@Singleton
-@Provides
-fun provideApiCharacterResponseMapper(): Mapper<CharacterListResponse, PaginatedCharacter> {
-    return CharacterListResponseMapper()
+@Module
+@InstallIn(SingletonComponent::class)
+object MapperModule {
+    @Provides
+    @Singleton
+    fun provideApiCharacterResponseMapper(): Mapper<CharacterListResponse, PaginatedCharacter> {
+        return CharacterListResponseMapper()
+    }
 }

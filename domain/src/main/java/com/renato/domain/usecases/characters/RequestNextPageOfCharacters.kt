@@ -6,7 +6,7 @@ import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.repositories.CharacterRepository
 import com.renato.domain.usecases.base.ExecutableUseCase
 import com.renato.domain.usecases.base.UseCaseResult
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 class RequestNextPageOfCharacters @Inject constructor(private val repository: CharacterRepository) :

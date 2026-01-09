@@ -5,9 +5,7 @@ plugins {
 
 android {
     namespace = "com.renato.logger"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 25
@@ -17,6 +15,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -29,13 +30,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    kotlin {
-        jvmToolchain(11)
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
 dependencies {
-    implementation(libs.timber)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.timber)
 }

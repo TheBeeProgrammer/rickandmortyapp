@@ -1,4 +1,4 @@
-package com.renato.rickandmorty
+package com.renato.rickandmorty.di
 
 import android.content.Context
 import com.renato.data.api.interceptor.ConnectionManager
