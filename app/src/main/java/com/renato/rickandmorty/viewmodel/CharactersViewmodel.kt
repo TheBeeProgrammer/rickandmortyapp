@@ -5,6 +5,8 @@ import com.renato.domain.qualifier.MainDispatcher
 import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
+import com.renato.rickandmorty.R
+import com.renato.rickandmorty.di.ResourceProvider
 import com.renato.rickandmorty.ui.mapper.CharacterUiMapper
 import com.renato.rickandmorty.ui.state.CharacterListAction
 import com.renato.rickandmorty.ui.state.CharacterListEvent
@@ -29,6 +31,7 @@ import javax.inject.Inject
 class CharactersViewModel @Inject constructor(
     private val requestNextPageOfCharacters: RequestNextPageOfCharacters,
     private val uiMapper: CharacterUiMapper,
+    private val resourceProvider: ResourceProvider,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : BaseViewModel<CharacterListAction, CharacterListState, CharacterListEvent>(
     defaultState = CharacterListState.Loading
@@ -106,6 +109,7 @@ class CharactersViewModel @Inject constructor(
             when (val result = requestNextPageOfCharacters(currentPage)) {
                 is UseCaseResult.Success -> {
                     handleSuccessfulLoad(result.data)
+                    hasMorePages = result.data.pagination.hasNextPage
                     currentPage++
                 }
 
@@ -113,7 +117,7 @@ class CharactersViewModel @Inject constructor(
                     when (val reason = result.reason) {
                         UseCaseResult.Reason.NoMoreCharacters -> handleNoMoreCharacters()
                         UseCaseResult.Reason.NoInternet -> handleNetworkError()
-                        is UseCaseResult.Reason.Unknown -> handleUnknownError(Exception(reason.message))
+                        is UseCaseResult.Reason.Unknown -> handleUnknownError(reason.message)
                     }
                 }
             }
@@ -156,7 +160,7 @@ class CharactersViewModel @Inject constructor(
     private fun handleNoMoreCharacters() {
         hasMorePages = false
         if (state.value is CharacterListState.Success) {
-            sendEvent(CharacterListEvent.ShowError("No more characters to load"))
+            sendEvent(CharacterListEvent.ShowError(resourceProvider.getString(R.string.no_more_characters)))
         }
     }
 
@@ -171,22 +175,24 @@ class CharactersViewModel @Inject constructor(
         val currentState = state.value
 
         if (currentState is CharacterListState.Success) {
-            sendEvent(CharacterListEvent.ShowError("Network unavailable. Check your connection."))
+            sendEvent(CharacterListEvent.ShowError(resourceProvider.getString(R.string.network_unavailable_extended)))
         } else {
-            updateState { CharacterListState.Error("Network unavailable") }
+            updateState { CharacterListState.Error(resourceProvider.getString(R.string.network_unavailable)) }
         }
     }
 
     /**
-     * Handles unexpected exceptions during character data fetching.
+     * Handles unexpected or unknown errors during data fetching.
      *
      * If the current state is [CharacterListState.Success], it triggers a [CharacterListEvent.ShowError]
-     * Otherwise, it updates the view state to [CharacterListState.Error].
+     * to notify the user of a pagination failure without removing existing content. Otherwise, it
+     * updates the view state to [CharacterListState.Error] to reflect a critical failure during the initial load.
      *
-     * @param exception The [Exception] that occurred during the network request or data processing.
+     * @param message An optional error message provided by the failure reason. If empty, a default
+     * generic error string is used.
      */
-    private fun handleUnknownError(exception: Exception) {
-        val errorMessage = exception.localizedMessage ?: "An unexpected error occurred"
+    private fun handleUnknownError(message: String) {
+        val errorMessage = message.ifEmpty { resourceProvider.getString(R.string.unexpected_error) }
         val currentState = state.value
 
         if (currentState is CharacterListState.Success) {

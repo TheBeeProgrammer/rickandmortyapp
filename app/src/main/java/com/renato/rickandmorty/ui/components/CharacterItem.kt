@@ -11,9 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.renato.rickandmorty.R
 import com.renato.rickandmorty.ui.model.CharacterUiModel
 
 /**
@@ -42,7 +44,10 @@ fun CharacterItem(
         ) {
             AsyncImage(
                 model = character.image,
-                contentDescription = "Image of ${character.name}",
+                contentDescription = stringResource(
+                    id = R.string.character_image_description,
+                    character.name
+                ),
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(8.dp)),

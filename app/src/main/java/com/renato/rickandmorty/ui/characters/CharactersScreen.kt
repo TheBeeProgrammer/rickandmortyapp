@@ -22,7 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.renato.logger.Logger
+import com.renato.rickandmorty.R
 import com.renato.rickandmorty.ui.components.CharacterItem
 import com.renato.rickandmorty.ui.components.ErrorScreen
 import com.renato.rickandmorty.ui.components.LoadingScreen
@@ -100,7 +102,7 @@ fun CharactersScreen(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Rick and Morty Characters") }
+                title = { Text(stringResource(id = R.string.characters_screen_title)) }
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }

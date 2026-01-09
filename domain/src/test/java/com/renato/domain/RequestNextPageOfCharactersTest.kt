@@ -1,5 +1,5 @@
-import com.renato.domain.model.NetworkUnavailableException
-import com.renato.domain.model.NoMoreCharactersException
+package com.renato.domain
+
 import com.renato.domain.model.character.Character
 import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.model.pagination.Pagination
@@ -7,8 +7,7 @@ import com.renato.domain.repositories.CharacterRepository
 import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.fail
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -41,7 +40,7 @@ class RequestNextPageOfCharactersTest {
     }
 
     @Test
-    fun `invoke returns PaginatedCharacter when characters exist`() = runTest {
+    fun `invoke returns Success with PaginatedCharacter when characters exist`() = runTest {
         // Given
         val page = 1
         val paginatedCharacter = PaginatedCharacter(
@@ -50,7 +49,6 @@ class RequestNextPageOfCharactersTest {
                 Character(1, "Rick", "Alive", "Human", "Male", "image.jpg")
             )
         )
-
         whenever(repository.requestCharacters(page))
             .thenReturn(UseCaseResult.Success(flowOf(paginatedCharacter)))
 
@@ -58,39 +56,46 @@ class RequestNextPageOfCharactersTest {
         val result = useCase.invoke(page)
 
         // Then
-        assertEquals(paginatedCharacter, result)
-        assertFalse(result.characters.isEmpty())
+        assertTrue(result is UseCaseResult.Success)
+        assertEquals(paginatedCharacter, (result as UseCaseResult.Success).data)
     }
 
-    @Test(expected = NoMoreCharactersException::class)
-    fun `invoke throws NoMoreCharactersException when character list is empty`() = runTest {
+    @Test
+    fun `invoke returns NoMoreCharacters failure when repository returns empty character list`() = runTest {
         // Given
         val page = 3
         val emptyPaginatedCharacter = PaginatedCharacter(
             pagination = Pagination(currentPage = page, hasNextPage = false),
             characters = emptyList()
         )
-
         whenever(repository.requestCharacters(page))
             .thenReturn(UseCaseResult.Success(flowOf(emptyPaginatedCharacter)))
 
         // When
-        useCase.invoke(page)
+        val result = useCase.invoke(page)
+
+        // Then
+        assertTrue(result is UseCaseResult.Failure)
+        assertEquals(UseCaseResult.Reason.NoMoreCharacters, (result as UseCaseResult.Failure).reason)
     }
 
-    @Test(expected = NetworkUnavailableException::class)
-    fun `invoke throws NetworkUnavailableException when no internet`() = runTest {
+    @Test
+    fun `invoke returns NoInternet failure when repository returns NoInternet`() = runTest {
         // Given
         val page = 1
         whenever(repository.requestCharacters(page))
             .thenReturn(UseCaseResult.Failure(UseCaseResult.Reason.NoInternet))
 
         // When
-        useCase.invoke(page)
+        val result = useCase.invoke(page)
+
+        // Then
+        assertTrue(result is UseCaseResult.Failure)
+        assertEquals(UseCaseResult.Reason.NoInternet, (result as UseCaseResult.Failure).reason)
     }
 
     @Test
-    fun `invoke throws Exception when unknown error occurs`() = runTest {
+    fun `invoke returns Unknown failure when repository returns Unknown`() = runTest {
         // Given
         val page = 1
         val errorMessage = "Unknown error"
@@ -98,11 +103,12 @@ class RequestNextPageOfCharactersTest {
             .thenReturn(UseCaseResult.Failure(UseCaseResult.Reason.Unknown(errorMessage)))
 
         // When
-        try {
-            useCase.invoke(page)
-            fail("Should have thrown an exception")
-        } catch (e: Exception) {
-            assertEquals(errorMessage, e.message)
-        }
+        val result = useCase.invoke(page)
+
+        // Then
+        assertTrue(result is UseCaseResult.Failure)
+        val reason = (result as UseCaseResult.Failure).reason
+        assertTrue(reason is UseCaseResult.Reason.Unknown)
+        assertEquals(errorMessage, (reason as UseCaseResult.Reason.Unknown).message)
     }
 }
