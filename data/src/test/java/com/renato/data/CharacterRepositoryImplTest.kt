@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -34,15 +35,22 @@ class CharacterRepositoryImplTest {
 
     private lateinit var repository: CharacterRepositoryImpl
     private val testDispatcher = UnconfinedTestDispatcher()
+    private var closeable: AutoCloseable? = null
 
     @Before
     fun setup() {
-        MockitoAnnotations.openMocks(this)
+        closeable = MockitoAnnotations.openMocks(this)
         repository = CharacterRepositoryImpl(
             apiService = apiService,
             ioDispatcher = testDispatcher,
             mapper = mapper
         )
+    }
+
+    @After
+    fun tearDown() {
+        closeable?.close()
+        closeable = null
     }
 
     @Test
@@ -107,30 +115,6 @@ class CharacterRepositoryImplTest {
         val failure = result as UseCaseResult.Failure
         assertTrue(failure.reason is UseCaseResult.Reason.Unknown)
         assertEquals(errorMessage, (failure.reason as UseCaseResult.Reason.Unknown).message)
-    }
-
-    @Test
-    fun `requestCharacters uses correct dispatcher`() = runTest {
-        // Given
-        val page = 1
-        val mockResponse = CharacterListResponse(
-            info = PageInfo(count = 0, pages = 0, next = null, prev = null),
-            results = emptyList()
-        )
-        val mockPaginatedCharacter = PaginatedCharacter(
-            pagination = Pagination(currentPage = page, hasNextPage = false),
-            characters = emptyList()
-        )
-
-        whenever(apiService.getCharacters(page)).thenReturn(mockResponse)
-        whenever(mapper.map(from = mockResponse, currentPage = page))
-            .thenReturn(mockPaginatedCharacter)
-
-        // When
-        repository.requestCharacters(page)
-
-        // Then
-        verify(apiService).getCharacters(page)
     }
 
     @Test

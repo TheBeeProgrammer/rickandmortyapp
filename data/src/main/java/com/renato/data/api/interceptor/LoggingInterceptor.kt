@@ -1,17 +1,17 @@
 package com.renato.data.api.interceptor
 
-import android.util.Log
 import com.renato.logger.Logger
 import okhttp3.logging.HttpLoggingInterceptor
 import javax.inject.Inject
 
 /**
- * A custom [HttpLoggingInterceptor.Logger] implementation that logs HTTP request
- * and response details using Android's [Log] utility.
+ * A custom [HttpLoggingInterceptor.Logger] implementation that redirects OkHttp
+ * network traffic logs to the application's internal [Logger].
  *
- * This logger is useful during development and debugging to inspect network traffic.
+ * this class allows for centralized logging of HTTP requests and responses,
+ * facilitating debugging and network monitoring during development.
  *
- * @constructor Creates an instance of [LoggingInterceptor], typically injected using a DI framework.
+ * @constructor Creates an instance of [LoggingInterceptor], intended for dependency injection.
  */
 class LoggingInterceptor @Inject constructor() : HttpLoggingInterceptor.Logger {
     override fun log(message: String) {

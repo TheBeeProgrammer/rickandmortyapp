@@ -37,7 +37,6 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.paging.common.android)
-    testImplementation(libs.junit)
 
     // Testing
     testImplementation(libs.androidx.paging.common)

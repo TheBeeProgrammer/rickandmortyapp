@@ -1,5 +1,3 @@
-package com.renato.domain
-
 import com.renato.domain.model.NetworkUnavailableException
 import com.renato.domain.model.NoMoreCharactersException
 import com.renato.domain.model.character.Character
@@ -14,6 +12,7 @@ import junit.framework.TestCase.fail
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -27,11 +26,18 @@ class RequestNextPageOfCharactersTest {
     private lateinit var repository: CharacterRepository
 
     private lateinit var useCase: RequestNextPageOfCharacters
+    private var closeable: AutoCloseable? = null
 
     @Before
     fun setup() {
-        MockitoAnnotations.openMocks(this)
+        closeable = MockitoAnnotations.openMocks(this)
         useCase = RequestNextPageOfCharacters(repository)
+    }
+
+    @After
+    fun tearDown() {
+        closeable?.close()
+        closeable = null
     }
 
     @Test

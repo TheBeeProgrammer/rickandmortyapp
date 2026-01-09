@@ -72,7 +72,6 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.truth)
 
-
     // Domain Layer
     implementation(project(":domain"))
     // Logger
