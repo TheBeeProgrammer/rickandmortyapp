@@ -1,0 +1,34 @@
+package com.renato.data.repository
+
+import com.renato.data.api.RickAndMortyApiService
+import com.renato.data.mapper.CharacterListResponseMapper
+import com.renato.data.repository.base.BaseRepository
+import com.renato.domain.repositories.CharacterRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+
+/**
+ * Implementation of [CharacterRepository] that fetches character data from the Rick and Morty API.
+ *
+ * @property apiService The retrofit service used to make network requests.
+ * @property ioDispatcher The coroutine dispatcher used to perform the network operations on a background thread.
+ */
+class CharacterRepositoryImpl
+@Inject
+constructor(
+    private val apiService: RickAndMortyApiService,
+    private val ioDispatcher: CoroutineDispatcher,
+    private val mapper: CharacterListResponseMapper,
+) : CharacterRepository, BaseRepository() {
+
+    override suspend fun requestCharacters(page: Int) = safeCall {
+        val response =
+            withContext(ioDispatcher) {
+                apiService.getCharacters(page)
+            }
+        val characters = mapper.map(from = response, currentPage = page)
+        flowOf(characters)
+    }
+}
