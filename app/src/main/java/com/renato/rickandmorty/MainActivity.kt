@@ -9,13 +9,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.renato.rickandmorty.ui.state.CharacterListAction
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.renato.rickandmorty.ui.theme.RickandmortyTheme
 import com.renato.rickandmorty.viewmodel.CharactersViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,19 +36,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val charactersViewModel = viewModel<CharactersViewModel>()
-    charactersViewModel.sendAction(CharacterListAction.LoadMoreCharacters)
+fun Greeting(
+    viewModel: CharactersViewModel = hiltViewModel(), name: String, modifier: Modifier = Modifier
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val events = viewModel.events
     Text(
         text = "Hello $name!",
         modifier = modifier
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    RickandmortyTheme {
-        Greeting("Android")
-    }
 }
