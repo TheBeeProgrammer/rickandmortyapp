@@ -1,8 +1,8 @@
 package com.renato.rickandmorty.ui.state
 
-import com.clara.clarachallenge.ui.viewmodel.base.ViewAction
-import com.clara.clarachallenge.ui.viewmodel.base.ViewEvent
-import com.clara.clarachallenge.ui.viewmodel.base.ViewState
+import com.renato.rickandmorty.viewmodel.base.ViewAction
+import com.renato.rickandmorty.viewmodel.base.ViewEvent
+import com.renato.rickandmorty.viewmodel.base.ViewState
 import com.renato.domain.model.character.PaginatedCharacter
 
 /**

@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+hilt {
+    enableAggregatingTask = false
+}
+
 android {
     namespace = "com.renato.rickandmorty"
     compileSdk {
@@ -42,6 +46,8 @@ android {
         jvmToolchain(11)
     }
 }
+
+
 
 dependencies {
     // --- Core & Lifecycle ---

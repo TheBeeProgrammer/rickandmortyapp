@@ -1,4 +1,4 @@
-package com.clara.clarachallenge.ui.viewmodel.base
+package com.renato.rickandmorty.viewmodel.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

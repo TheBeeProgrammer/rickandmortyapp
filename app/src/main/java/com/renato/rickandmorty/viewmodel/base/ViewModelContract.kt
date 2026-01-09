@@ -1,4 +1,4 @@
-package com.clara.clarachallenge.ui.viewmodel.base
+package com.renato.rickandmorty.viewmodel.base
 
 interface ViewAction
 interface ViewState

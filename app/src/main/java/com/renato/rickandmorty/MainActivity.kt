@@ -11,7 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.renato.rickandmorty.ui.state.CharacterListAction
 import com.renato.rickandmorty.ui.theme.RickandmortyTheme
+import com.renato.rickandmorty.viewmodel.CharactersViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,6 +35,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
+    val charactersViewModel = viewModel<CharactersViewModel>()
+    charactersViewModel.sendAction(CharacterListAction.LoadMoreCharacters)
     Text(
         text = "Hello $name!",
         modifier = modifier

@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+hilt {
+    enableAggregatingTask = false
+}
+
 android {
     namespace = "com.renato.data"
 
