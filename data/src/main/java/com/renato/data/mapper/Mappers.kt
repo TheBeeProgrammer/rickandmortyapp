@@ -16,6 +16,11 @@ import javax.inject.Inject
 class CharacterListResponseMapper @Inject constructor() :
     Mapper<CharacterListResponse, PaginatedCharacter> {
 
+    /**
+     * Converts this API CharacterResponse into a domain Character model.
+     *
+     * @return A Character whose properties are populated from this CharacterResponse.
+     */
     private fun CharacterResponse.toDomain(): Character {
         return Character(
             id = id,
@@ -27,6 +32,13 @@ class CharacterListResponseMapper @Inject constructor() :
         )
     }
 
+    /**
+     * Converts a CharacterListResponse into a PaginatedCharacter domain model.
+     *
+     * @param from The API response containing character results and pagination info.
+     * @param currentPage The current page index; must not be null (a null value will cause a NullPointerException due to a non-null assertion).
+     * @return A PaginatedCharacter containing mapped Character items and pagination metadata.
+     */
     override fun map(
         from: CharacterListResponse,
         currentPage: Int?

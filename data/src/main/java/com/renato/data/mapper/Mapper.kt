@@ -11,11 +11,11 @@ package com.renato.data.mapper
  */
 interface Mapper<FROM, TO> {
     /**
-     * Maps an object of type [FROM] data layer.
-     * into an object of type [TO] domain layer.
-     *
-     * @param from The input object from the data layer.
-     * @return The mapped object in the domain model format.
-     */
+ * Transforms a data-layer object into its corresponding domain-layer representation.
+ *
+ * @param from The source object from the data layer to be mapped.
+ * @param currentPage Optional current page number related to the source; may be `null` if not applicable.
+ * @return The mapped object in the domain model format.
+ */
     fun map(from: FROM, currentPage: Int?): TO
 }

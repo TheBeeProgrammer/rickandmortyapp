@@ -11,5 +11,11 @@ package com.renato.domain.usecases.base
  * @param Result The type of the result produced by the use case.
  */
 interface ExecutableUseCase<in Params, out Result> {
-    suspend operator fun invoke(params: Params): Result
+    /**
+ * Executes the use case with the provided parameters.
+ *
+ * @param params Input parameters for the use case execution.
+ * @return The result produced by this use case.
+ */
+suspend operator fun invoke(params: Params): Result
 }

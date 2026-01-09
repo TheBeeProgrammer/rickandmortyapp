@@ -13,9 +13,10 @@ import retrofit2.http.Query
 interface RickAndMortyApiService {
 
     /**
-     * Get a paginated list of characters
+     * Retrieve a paginated list of Rick and Morty characters.
      *
-     * @param page Page number (starts at 1)
+     * @param page The page number to fetch; starts at 1 by default.
+     * @return A CharacterListResponse containing the characters and pagination metadata.
      */
     @GET("character")
     suspend fun getCharacters(

@@ -20,6 +20,13 @@ import javax.inject.Inject
  */
 class NetworkStatusInterceptor @Inject constructor(private val connectionManager: ConnectionManager) :
     Interceptor {
+    /**
+     * Verifies network connectivity and either proceeds with the HTTP request or fails when offline.
+     *
+     * @param chain The OkHttp interceptor chain for the outgoing request.
+     * @return The HTTP response produced by proceeding with the provided chain.
+     * @throws NetworkUnavailableException If there is no active network connection.
+     */
     override fun intercept(chain: Interceptor.Chain): Response {
         return if (connectionManager.isConnected()) {
             chain.proceed(chain.request())

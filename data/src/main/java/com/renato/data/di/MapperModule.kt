@@ -12,6 +12,11 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object MapperModule {
+    /**
+     * Provides a Mapper that converts a CharacterListResponse into a PaginatedCharacter for injection.
+     *
+     * @return A Mapper that transforms `CharacterListResponse` instances into `PaginatedCharacter` instances.
+     */
     @Provides
     fun provideApiCharacterResponseMapper(): Mapper<CharacterListResponse, PaginatedCharacter> {
         return CharacterListResponseMapper()

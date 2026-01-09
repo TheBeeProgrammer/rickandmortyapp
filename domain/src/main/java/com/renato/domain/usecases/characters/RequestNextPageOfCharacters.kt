@@ -11,6 +11,15 @@ import kotlinx.coroutines.flow.first
 
 class RequestNextPageOfCharacters @Inject constructor(private val repository: CharacterRepository) :
     ExecutableUseCase<Int, PaginatedCharacter> {
+    /**
+     * Requests the next page of characters from the repository and returns the retrieved paginated result.
+     *
+     * @param params The page index to request.
+     * @return The PaginatedCharacter for the requested page.
+     * @throws NoMoreCharactersException if the retrieved page contains no characters.
+     * @throws NetworkUnavailableException if the request failed due to lack of internet connectivity.
+     * @throws Exception with the repository-provided message for unknown failure reasons.
+     */
     override suspend fun invoke(params: Int): PaginatedCharacter {
         return when (val result = repository.requestCharacters(params)) {
             is UseCaseResult.Success -> {

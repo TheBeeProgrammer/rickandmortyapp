@@ -14,6 +14,11 @@ import javax.inject.Inject
  * @constructor Creates an instance of [LoggingInterceptor], typically injected using a DI framework.
  */
 class LoggingInterceptor @Inject constructor() : HttpLoggingInterceptor.Logger {
+    /**
+     * Logs a single HTTP request/response message using the project's info logger.
+     *
+     * @param message The log line produced by the HTTP logging interceptor (request/response details).
+     */
     override fun log(message: String) {
         Logger.i(message = message)
     }

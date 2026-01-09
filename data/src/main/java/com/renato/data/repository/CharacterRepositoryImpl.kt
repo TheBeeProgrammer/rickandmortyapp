@@ -25,6 +25,12 @@ constructor(
     private val mapper: Mapper<CharacterListResponse, PaginatedCharacter>,
 ) : CharacterRepository, BaseRepository() {
 
+    /**
+     * Fetches a page of characters from the remote API and emits the mapped paginated result.
+     *
+     * @param page The page number to request from the API.
+     * @return A Flow that emits the PaginatedCharacter for the requested page.
+     */
     override suspend fun requestCharacters(page: Int) = safeCall {
         val response =
             withContext(ioDispatcher) {

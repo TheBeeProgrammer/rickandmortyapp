@@ -22,6 +22,13 @@ class ConnectionManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
+    /**
+     * Reports whether the device currently has an active network with internet capability.
+     *
+     * Returns `false` if there is no active network or the network's capabilities cannot be determined.
+     *
+     * @return `true` if an active network with `NET_CAPABILITY_INTERNET` is present, `false` otherwise.
+     */
     fun isConnected(): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

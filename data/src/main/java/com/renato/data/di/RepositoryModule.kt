@@ -16,6 +16,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
+    /**
+     * Provides a CharacterRepository implementation configured with the given dependencies.
+     *
+     * @param apiService Client used to fetch character data from the Rick and Morty API.
+     * @param ioDispatcher Coroutine dispatcher used for IO-bound work within the repository.
+     * @param mapper Maps API character list responses to the domain PaginatedCharacter model.
+     * @return A CharacterRepository backed by CharacterRepositoryImpl configured with the provided dependencies.
+     */
     @Provides
     fun provideCharacterRepository(
         apiService: RickAndMortyApiService,
