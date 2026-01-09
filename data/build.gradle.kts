@@ -5,25 +5,13 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-hilt {
-    enableAggregatingTask = false
-}
-
 android {
     namespace = "com.renato.data"
-
-    buildFeatures {
-        buildConfig = true
-    }
-
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
+    android.buildFeatures.buildConfig = true
 
     defaultConfig {
         minSdk = 25
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -40,11 +28,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlin {
-        compilerOptions {
-            freeCompilerArgs.add("-Xannotation-default-target=param-property")
-        }
-        jvmToolchain(11)
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 }
 
