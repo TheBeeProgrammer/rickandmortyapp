@@ -49,6 +49,11 @@ El proyecto está dividido en módulos independientes para separar responsabilid
 
 -  **`:logger`**: Módulo auxiliar para el manejo de logs en el sistema.
 
+## 📸 Screenshots
+
+| Personajes (Éxito) | Cargando (Loading) | Sin Internet (Error) |
+| :---: | :---: | :---: |
+| ![Success](screenshots/Success.png) | ![Loading](screenshots/Loading.png) | ![NoInternet](screenshots/NoInternet.png) |
 
 
 ### 🔄 MVI & Unidirectional Data Flow (UDF)
