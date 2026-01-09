@@ -1,12 +1,16 @@
 package com.renato.rickandmorty.viewmodel
 
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.renato.domain.model.NetworkUnavailableException
-import com.renato.domain.model.character.Character
 import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.model.pagination.Pagination
+import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
+import com.renato.rickandmorty.ui.mapper.CharacterUiMapper
+import com.renato.rickandmorty.ui.model.CharacterUiModel
+import com.renato.rickandmorty.ui.model.PaginatedCharacterUiModel
+import com.renato.rickandmorty.ui.state.CharacterListAction
 import com.renato.rickandmorty.ui.state.CharacterListState
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -15,146 +19,169 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class CharactersViewModelTest {
 
-    @get:Rule
-    val instantExecutorRule = InstantTaskExecutorRule()
+    private lateinit var viewModel: CharactersViewModel
 
     @Mock
     private lateinit var requestNextPageOfCharacters: RequestNextPageOfCharacters
 
-    private lateinit var viewModel: CharactersViewModel
+    @Mock
+    private lateinit var uiMapper: CharacterUiMapper
+
     private val testDispatcher = StandardTestDispatcher()
+
+    private var closeable: AutoCloseable? = null
 
     @Before
     fun setup() {
-        MockitoAnnotations.openMocks(this)
+        closeable = MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        closeable?.close()
+    }
+
+    private fun createViewModel() {
+        viewModel = CharactersViewModel(
+            requestNextPageOfCharacters,
+            uiMapper,
+            testDispatcher
+        )
     }
 
     @Test
-    fun `when ViewModel is created then it shows loading state and loads first page`() = runTest {
-        val mockData = createMockPaginatedCharacter(page = 1, characterCount = 2)
-        whenever(requestNextPageOfCharacters.invoke(1)).thenReturn(mockData)
+    fun `init calls loadNextPage and updates state to Success on success`() = runTest {
+        // Given
+        val domainResult = PaginatedCharacter(
+            characters = emptyList(),
+            pagination = Pagination(currentPage = 1, hasNextPage = true)
+        )
+        val uiResult = PaginatedCharacterUiModel(
+            characters = listOf(mockCharacterUi1),
+            hasNextPage = true
+        )
 
-        viewModel = CharactersViewModel(requestNextPageOfCharacters, testDispatcher)
+        whenever(requestNextPageOfCharacters(1)).thenReturn(UseCaseResult.Success(domainResult))
+        whenever(uiMapper.mapToUi(domainResult)).thenReturn(uiResult)
 
-        assertTrue(viewModel.state.value is CharacterListState.Loading)
-
+        // When
+        createViewModel()
         advanceUntilIdle()
 
-        val state = viewModel.state.value
-        assertTrue(state is CharacterListState.Success)
-        assertEquals(2, (state as CharacterListState.Success).paginatedCharacter.characters.size)
-        verify(requestNextPageOfCharacters).invoke(1)
+        // Then
+        val expectedState = CharacterListState.Success(uiResult)
+        assertEquals(expectedState, viewModel.state.value)
     }
 
     @Test
-    fun `when network unavailable on first load then user sees error screen with retry option`() =
-        runTest {
-            whenever(requestNextPageOfCharacters.invoke(1)).thenAnswer {
-                throw NetworkUnavailableException()
-            }
+    fun `init updates state to Error on Unknown failure`() = runTest {
+        // Given
+        val errorMessage = "Something went wrong"
+        whenever(requestNextPageOfCharacters(1)).thenReturn(
+            UseCaseResult.Failure(UseCaseResult.Reason.Unknown(errorMessage))
+        )
 
-            viewModel = CharactersViewModel(requestNextPageOfCharacters, testDispatcher)
-            advanceUntilIdle()
-
-            val state = viewModel.state.value
-            assertTrue(state is CharacterListState.Error)
-            assertEquals("Network unavailable", (state as CharacterListState.Error).message)
-        }
-
-    @Test
-    fun `when unexpected error occurs on first load then user sees error screen`() = runTest {
-        val errorMessage = "Server error 500"
-        whenever(requestNextPageOfCharacters.invoke(1)).thenAnswer {
-            throw RuntimeException(errorMessage)
-        }
-
-        viewModel = CharactersViewModel(requestNextPageOfCharacters, testDispatcher)
+        // When
+        createViewModel()
         advanceUntilIdle()
 
-        val state = viewModel.state.value
-        assertTrue(state is CharacterListState.Error)
-        assertEquals(errorMessage, (state as CharacterListState.Error).message)
+        // Then
+        val expectedState = CharacterListState.Error(errorMessage)
+        assertEquals(expectedState, viewModel.state.value)
     }
 
     @Test
-    fun `when user retries after error then data loads successfully from beginning`() = runTest {
-        val successData = createMockPaginatedCharacter(page = 1, characterCount = 2)
-        whenever(requestNextPageOfCharacters.invoke(1))
-            .thenAnswer { throw NetworkUnavailableException() }
-            .thenReturn(successData)
+    fun `LoadMoreCharacters appends characters when current state is Success`() = runTest {
+        // Given
+        val initialDomainResult = PaginatedCharacter(
+            characters = emptyList(),
+            pagination = Pagination(currentPage = 1, hasNextPage = true)
+        )
+        val initialUiResult = PaginatedCharacterUiModel(
+            characters = listOf(mockCharacterUi1),
+            hasNextPage = true
+        )
 
-        viewModel = CharactersViewModel(requestNextPageOfCharacters, testDispatcher)
+        whenever(requestNextPageOfCharacters(1)).thenReturn(UseCaseResult.Success(initialDomainResult))
+        whenever(uiMapper.mapToUi(initialDomainResult)).thenReturn(initialUiResult)
+
+        createViewModel()
+        advanceUntilIdle()
+
+        val nextDomainResult = PaginatedCharacter(
+            characters = emptyList(),
+            pagination = Pagination(currentPage = 2, hasNextPage = true)
+        )
+        val nextUiResult = PaginatedCharacterUiModel(
+            characters = listOf(mockCharacterUi2),
+            hasNextPage = true
+        )
+
+        whenever(requestNextPageOfCharacters(2)).thenReturn(UseCaseResult.Success(nextDomainResult))
+        whenever(uiMapper.mapToUi(nextDomainResult)).thenReturn(nextUiResult)
+
+        // When
+        viewModel.sendAction(CharacterListAction.LoadMoreCharacters)
+        advanceUntilIdle()
+
+        // Then
+        val expectedCharacters = listOf(mockCharacterUi1, mockCharacterUi2)
+        val actualState = viewModel.state.value as CharacterListState.Success
+        assertEquals(expectedCharacters, actualState.paginatedCharacter.characters)
+    }
+
+    @Test
+    fun `Retry reloads from page 1 when current state is Error`() = runTest {
+        // Given
+        whenever(requestNextPageOfCharacters(1)).thenReturn(
+            UseCaseResult.Failure(UseCaseResult.Reason.NoInternet)
+        )
+
+        createViewModel()
         advanceUntilIdle()
 
         assertTrue(viewModel.state.value is CharacterListState.Error)
 
-        viewModel.retry()
-
-        assertTrue(viewModel.state.value is CharacterListState.Loading)
-
-        advanceUntilIdle()
-
-        val state = viewModel.state.value
-        assertTrue(state is CharacterListState.Success)
-        assertEquals(2, (state as CharacterListState.Success).paginatedCharacter.characters.size)
-        verify(requestNextPageOfCharacters, times(2)).invoke(1)
-    }
-
-    @Test
-    fun `when retry is called but no error exists then nothing happens`() = runTest {
-        val page1Data = createMockPaginatedCharacter(page = 1, characterCount = 1)
-        whenever(requestNextPageOfCharacters.invoke(1)).thenReturn(page1Data)
-
-        viewModel = CharactersViewModel(requestNextPageOfCharacters, testDispatcher)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.state.value is CharacterListState.Success)
-
-        viewModel.retry()
-        advanceUntilIdle()
-
-        verify(requestNextPageOfCharacters, times(1)).invoke(1)
-    }
-
-    private fun createMockPaginatedCharacter(
-        page: Int,
-        characterCount: Int,
-        startId: Int = 1
-    ): PaginatedCharacter {
-        val characters = (startId until startId + characterCount).map { id ->
-            Character(
-                id = id,
-                name = "Character $id",
-                status = "Alive",
-                species = "Human",
-                gender = "Male",
-                image = "image$id.jpg"
-            )
-        }
-
-        return PaginatedCharacter(
-            characters = characters,
-            pagination = Pagination(currentPage = page, hasNextPage = true)
+        whenever(requestNextPageOfCharacters(1)).thenReturn(
+            UseCaseResult.Failure(UseCaseResult.Reason.NoMoreCharacters)
         )
+
+        // When
+        viewModel.sendAction(CharacterListAction.Retry)
+        advanceUntilIdle()
+
+        // Then
+        verify(requestNextPageOfCharacters, org.mockito.kotlin.times(2)).invoke(1)
     }
+
+    // Test data
+    private val mockCharacterUi1 = CharacterUiModel(
+        id = 1,
+        name = "Rick Sanchez",
+        status = "Alive",
+        species = "Human",
+        gender = "Male",
+        image = "https://example.com/rick.png"
+    )
+
+    private val mockCharacterUi2 = CharacterUiModel(
+        id = 2,
+        name = "Morty Smith",
+        status = "Alive",
+        species = "Human",
+        gender = "Male",
+        image = "https://example.com/morty.png"
+    )
 }

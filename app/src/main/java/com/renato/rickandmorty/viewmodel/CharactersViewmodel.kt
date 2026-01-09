@@ -1,7 +1,7 @@
 package com.renato.rickandmorty.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.renato.domain.MainDispatcher
+import com.renato.domain.qualifier.MainDispatcher
 import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
@@ -110,10 +110,10 @@ class CharactersViewModel @Inject constructor(
                 }
 
                 is UseCaseResult.Failure -> {
-                    when (result.reason) {
+                    when (val reason = result.reason) {
                         UseCaseResult.Reason.NoMoreCharacters -> handleNoMoreCharacters()
                         UseCaseResult.Reason.NoInternet -> handleNetworkError()
-                        is UseCaseResult.Reason.Unknown -> handleUnknownError(Exception())
+                        is UseCaseResult.Reason.Unknown -> handleUnknownError(Exception(reason.message))
                     }
                 }
             }

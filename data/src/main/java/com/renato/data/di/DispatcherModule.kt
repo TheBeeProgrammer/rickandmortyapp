@@ -1,7 +1,7 @@
 package com.renato.data.di
 
-import com.renato.domain.IoDispatcher
-import com.renato.domain.MainDispatcher
+import com.renato.domain.qualifier.IoDispatcher
+import com.renato.domain.qualifier.MainDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
