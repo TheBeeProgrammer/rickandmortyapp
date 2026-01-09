@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">rickandmorty</string>
+    <string name="retry_button">Retry</string>
+    <string name="characters_screen_title">Rick and Morty Characters</string>
+    <string name="character_image_description">Image of %1$s</string>
+    <string name="no_more_characters">No more characters to load</string>
+    <string name="network_unavailable_extended">Network unavailable. Check your connection.</string>
+    <string name="network_unavailable">Network unavailable</string>
+    <string name="unexpected_error">An unexpected error occurred</string>
 </resources>

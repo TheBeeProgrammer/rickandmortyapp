@@ -1,11 +1,13 @@
 package com.renato.rickandmorty.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.renato.domain.MainDispatcher
-import com.renato.domain.model.NetworkUnavailableException
-import com.renato.domain.model.NoMoreCharactersException
+import com.renato.domain.qualifier.MainDispatcher
 import com.renato.domain.model.character.PaginatedCharacter
+import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
+import com.renato.rickandmorty.R
+import com.renato.rickandmorty.di.ResourceProvider
+import com.renato.rickandmorty.ui.mapper.CharacterUiMapper
 import com.renato.rickandmorty.ui.state.CharacterListAction
 import com.renato.rickandmorty.ui.state.CharacterListEvent
 import com.renato.rickandmorty.ui.state.CharacterListState
@@ -15,9 +17,21 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for the character list screen.
+ *
+ * It manages the pagination logic, handles user actions, and converts domain models
+ * to UI models for presentation.
+ *
+ * @property requestNextPageOfCharacters Use case to fetch the next page of characters.
+ * @property uiMapper Mapper to transform domain models to UI-specific models.
+ * @property mainDispatcher Dispatcher to execute UI-related operations.
+ */
 @HiltViewModel
 class CharactersViewModel @Inject constructor(
     private val requestNextPageOfCharacters: RequestNextPageOfCharacters,
+    private val uiMapper: CharacterUiMapper,
+    private val resourceProvider: ResourceProvider,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : BaseViewModel<CharacterListAction, CharacterListState, CharacterListEvent>(
     defaultState = CharacterListState.Loading
@@ -38,6 +52,22 @@ class CharactersViewModel @Inject constructor(
                     loadNextPage()
                 }
             }
+
+            CharacterListAction.Retry -> {
+                retry()
+            }
+        }
+    }
+
+    /**
+     * Attempts to reload the character data after a failure.
+     */
+    private fun retry() {
+        if (state.value is CharacterListState.Error) {
+            updateState { CharacterListState.Loading }
+            currentPage = 1
+            hasMorePages = true
+            loadNextPage()
         }
     }
 
@@ -57,19 +87,18 @@ class CharactersViewModel @Inject constructor(
     }
 
     /**
-     * Requests the next page of characters and updates ViewModel state.
+     * Requests the next page of characters and updates the ViewModel state.
      *
-     * - Returns immediately if a load is already in progress.
-     * - Sets [isLoadingMore] while the request is active and ensures it is cleared in a `finally` block.
-     * - Launches the request in [viewModelScope] on [mainDispatcher].
-     *
-     * Success:
-     * - Calls [handleSuccessfulLoad] with the received [PaginatedCharacter] and increments [currentPage].
-     *
-     * Error handling:
-     * - [NoMoreCharactersException] -> [handleNoMoreCharacters]
-     * - [NetworkUnavailableException] -> [handleNetworkError]
-     * - Any other [Exception] -> [handleUnknownError]
+     * This function performs the following steps:
+     * 1. Prevents duplicate requests by checking [isLoadingMore].
+     * 2. Sets [isLoadingMore] to true and launches a coroutine on [mainDispatcher].
+     * 3. Executes the [requestNextPageOfCharacters] use case using [currentPage].
+     * 4. On success: Updates the state via [handleSuccessfulLoad] and increments [currentPage].
+     * 5. On failure: Maps the [UseCaseResult.Reason] to specific error handlers:
+     *    - [UseCaseResult.Reason.NoMoreCharacters] -> [handleNoMoreCharacters]
+     *    - [UseCaseResult.Reason.NoInternet] -> [handleNetworkError]
+     *    - [UseCaseResult.Reason.Unknown] -> [handleUnknownError]
+     * 6. Ensures [isLoadingMore] is reset to false once the operation completes.
      */
     private fun loadNextPage() {
         if (isLoadingMore) return
@@ -77,19 +106,22 @@ class CharactersViewModel @Inject constructor(
         isLoadingMore = true
 
         viewModelScope.launch(mainDispatcher) {
-            try {
-                val result = requestNextPageOfCharacters(currentPage)
-                handleSuccessfulLoad(result)
-                currentPage++
-            } catch (e: NoMoreCharactersException) {
-                handleNoMoreCharacters()
-            } catch (e: NetworkUnavailableException) {
-                handleNetworkError()
-            } catch (e: Exception) {
-                handleUnknownError(e)
-            } finally {
-                isLoadingMore = false
+            when (val result = requestNextPageOfCharacters(currentPage)) {
+                is UseCaseResult.Success -> {
+                    handleSuccessfulLoad(result.data)
+                    hasMorePages = result.data.pagination.hasNextPage
+                    currentPage++
+                }
+
+                is UseCaseResult.Failure -> {
+                    when (val reason = result.reason) {
+                        UseCaseResult.Reason.NoMoreCharacters -> handleNoMoreCharacters()
+                        UseCaseResult.Reason.NoInternet -> handleNetworkError()
+                        is UseCaseResult.Reason.Unknown -> handleUnknownError(reason.message)
+                    }
+                }
             }
+            isLoadingMore = false
         }
     }
 
@@ -103,16 +135,17 @@ class CharactersViewModel @Inject constructor(
      * @param result The [PaginatedCharacter] object containing the newly fetched characters and pagination info.
      */
     private fun handleSuccessfulLoad(result: PaginatedCharacter) {
+        val uiResult = uiMapper.mapToUi(result)
         updateState { existingState ->
             when (existingState) {
                 is CharacterListState.Success -> {
                     val updatedCharacters =
-                        existingState.paginatedCharacter.characters + result.characters
-                    val updatedPagination = result.copy(characters = updatedCharacters)
+                        existingState.paginatedCharacter.characters + uiResult.characters
+                    val updatedPagination = uiResult.copy(characters = updatedCharacters)
                     CharacterListState.Success(updatedPagination)
                 }
 
-                else -> CharacterListState.Success(result)
+                else -> CharacterListState.Success(uiResult)
             }
         }
     }
@@ -127,7 +160,7 @@ class CharactersViewModel @Inject constructor(
     private fun handleNoMoreCharacters() {
         hasMorePages = false
         if (state.value is CharacterListState.Success) {
-            sendEvent(CharacterListEvent.ShowError("No more characters to load"))
+            sendEvent(CharacterListEvent.ShowError(resourceProvider.getString(R.string.no_more_characters)))
         }
     }
 
@@ -142,44 +175,30 @@ class CharactersViewModel @Inject constructor(
         val currentState = state.value
 
         if (currentState is CharacterListState.Success) {
-            sendEvent(CharacterListEvent.ShowError("Network unavailable. Check your connection."))
+            sendEvent(CharacterListEvent.ShowError(resourceProvider.getString(R.string.network_unavailable_extended)))
         } else {
-            updateState { CharacterListState.Error("Network unavailable") }
+            updateState { CharacterListState.Error(resourceProvider.getString(R.string.network_unavailable)) }
         }
     }
 
     /**
-     * Handles unexpected exceptions during character data fetching.
+     * Handles unexpected or unknown errors during data fetching.
      *
      * If the current state is [CharacterListState.Success], it triggers a [CharacterListEvent.ShowError]
-     * Otherwise, it updates the view state to [CharacterListState.Error].
+     * to notify the user of a pagination failure without removing existing content. Otherwise, it
+     * updates the view state to [CharacterListState.Error] to reflect a critical failure during the initial load.
      *
-     * @param exception The [Exception] that occurred during the network request or data processing.
+     * @param message An optional error message provided by the failure reason. If empty, a default
+     * generic error string is used.
      */
-    private fun handleUnknownError(exception: Exception) {
-        val errorMessage = exception.localizedMessage ?: "An unexpected error occurred"
+    private fun handleUnknownError(message: String) {
+        val errorMessage = message.ifEmpty { resourceProvider.getString(R.string.unexpected_error) }
         val currentState = state.value
 
         if (currentState is CharacterListState.Success) {
             sendEvent(CharacterListEvent.ShowError(errorMessage))
         } else {
             updateState { CharacterListState.Error(errorMessage) }
-        }
-    }
-
-    /**
-     * Attempts to reload the character data after a failure.
-     *
-     * This method resets the pagination state (setting [currentPage] back to 1 and [hasMorePages] to true),
-     * updates the UI state to [CharacterListState.Loading], and triggers a new request for the first page.
-     * It only executes if the current state is [CharacterListState.Error].
-     */
-    fun retry() {
-        if (state.value is CharacterListState.Error) {
-            updateState { CharacterListState.Loading }
-            currentPage = 1
-            hasMorePages = true
-            loadNextPage()
         }
     }
 }

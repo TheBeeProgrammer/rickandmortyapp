@@ -1,4 +1,4 @@
-package com.renato.domain
+package com.renato.domain.qualifier
 
 import javax.inject.Qualifier
 
