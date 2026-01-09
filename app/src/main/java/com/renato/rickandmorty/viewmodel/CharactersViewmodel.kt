@@ -15,9 +15,20 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel for the character list screen.
+ *
+ * It manages the pagination logic, handles user actions, and converts domain models
+ * to UI models for presentation.
+ *
+ * @property requestNextPageOfCharacters Use case to fetch the next page of characters.
+ * @property uiMapper Mapper to transform domain models to UI-specific models.
+ * @property mainDispatcher Dispatcher to execute UI-related operations.
+ */
 @HiltViewModel
 class CharactersViewModel @Inject constructor(
     private val requestNextPageOfCharacters: RequestNextPageOfCharacters,
+    private val uiMapper: com.renato.rickandmorty.ui.mapper.CharacterUiMapper,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : BaseViewModel<CharacterListAction, CharacterListState, CharacterListEvent>(
     defaultState = CharacterListState.Loading
@@ -38,6 +49,21 @@ class CharactersViewModel @Inject constructor(
                     loadNextPage()
                 }
             }
+            CharacterListAction.Retry -> {
+                retry()
+            }
+        }
+    }
+
+    /**
+     * Attempts to reload the character data after a failure.
+     */
+    private fun retry() {
+        if (state.value is CharacterListState.Error) {
+            updateState { CharacterListState.Loading }
+            currentPage = 1
+            hasMorePages = true
+            loadNextPage()
         }
     }
 
@@ -103,16 +129,17 @@ class CharactersViewModel @Inject constructor(
      * @param result The [PaginatedCharacter] object containing the newly fetched characters and pagination info.
      */
     private fun handleSuccessfulLoad(result: PaginatedCharacter) {
+        val uiResult = uiMapper.mapToUi(result)
         updateState { existingState ->
             when (existingState) {
                 is CharacterListState.Success -> {
                     val updatedCharacters =
-                        existingState.paginatedCharacter.characters + result.characters
-                    val updatedPagination = result.copy(characters = updatedCharacters)
+                        existingState.paginatedCharacter.characters + uiResult.characters
+                    val updatedPagination = uiResult.copy(characters = updatedCharacters)
                     CharacterListState.Success(updatedPagination)
                 }
 
-                else -> CharacterListState.Success(result)
+                else -> CharacterListState.Success(uiResult)
             }
         }
     }
@@ -164,22 +191,6 @@ class CharactersViewModel @Inject constructor(
             sendEvent(CharacterListEvent.ShowError(errorMessage))
         } else {
             updateState { CharacterListState.Error(errorMessage) }
-        }
-    }
-
-    /**
-     * Attempts to reload the character data after a failure.
-     *
-     * This method resets the pagination state (setting [currentPage] back to 1 and [hasMorePages] to true),
-     * updates the UI state to [CharacterListState.Loading], and triggers a new request for the first page.
-     * It only executes if the current state is [CharacterListState.Error].
-     */
-    fun retry() {
-        if (state.value is CharacterListState.Error) {
-            updateState { CharacterListState.Loading }
-            currentPage = 1
-            hasMorePages = true
-            loadNextPage()
         }
     }
 }

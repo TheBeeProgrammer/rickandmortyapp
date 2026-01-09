@@ -1,4 +1,6 @@
 package com.renato.domain.model
 
-class NetworkUnavailableException : Exception()
+import java.io.IOException
+
+class NetworkUnavailableException : IOException()
 class NoMoreCharactersException : Exception()
