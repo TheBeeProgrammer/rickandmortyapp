@@ -10,23 +10,19 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
 class RequestNextPageOfCharacters @Inject constructor(private val repository: CharacterRepository) :
-    ExecutableUseCase<Int, PaginatedCharacter> {
-    override suspend fun invoke(params: Int): PaginatedCharacter {
+    ExecutableUseCase<Int, UseCaseResult<PaginatedCharacter>> {
+    override suspend fun invoke(params: Int): UseCaseResult<PaginatedCharacter> {
         return when (val result = repository.requestCharacters(params)) {
             is UseCaseResult.Success -> {
                 val paginatedCharacter = result.data.first()
                 if (paginatedCharacter.characters.isEmpty()) {
-                    throw NoMoreCharactersException()
+                    UseCaseResult.Failure(UseCaseResult.Reason.NoMoreCharacters)
+                } else {
+                    UseCaseResult.Success(paginatedCharacter)
                 }
-                paginatedCharacter
             }
 
-            is UseCaseResult.Failure -> {
-                when (result.reason) {
-                    UseCaseResult.Reason.NoInternet -> throw NetworkUnavailableException()
-                    is UseCaseResult.Reason.Unknown -> throw Exception(result.reason.message)
-                }
-            }
+            is UseCaseResult.Failure -> result
         }
 
     }

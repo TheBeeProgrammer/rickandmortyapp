@@ -19,6 +19,7 @@ sealed class UseCaseResult<out T> {
      */
     sealed class Reason {
         object NoInternet: Reason()
+        object NoMoreCharacters: Reason()
         data class Unknown(val message: String): Reason()
     }
 }

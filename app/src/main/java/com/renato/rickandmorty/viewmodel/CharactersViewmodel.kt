@@ -2,10 +2,10 @@ package com.renato.rickandmorty.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.renato.domain.MainDispatcher
-import com.renato.domain.model.NetworkUnavailableException
-import com.renato.domain.model.NoMoreCharactersException
 import com.renato.domain.model.character.PaginatedCharacter
+import com.renato.domain.usecases.base.UseCaseResult
 import com.renato.domain.usecases.characters.RequestNextPageOfCharacters
+import com.renato.rickandmorty.ui.mapper.CharacterUiMapper
 import com.renato.rickandmorty.ui.state.CharacterListAction
 import com.renato.rickandmorty.ui.state.CharacterListEvent
 import com.renato.rickandmorty.ui.state.CharacterListState
@@ -28,7 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CharactersViewModel @Inject constructor(
     private val requestNextPageOfCharacters: RequestNextPageOfCharacters,
-    private val uiMapper: com.renato.rickandmorty.ui.mapper.CharacterUiMapper,
+    private val uiMapper: CharacterUiMapper,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : BaseViewModel<CharacterListAction, CharacterListState, CharacterListEvent>(
     defaultState = CharacterListState.Loading
@@ -49,6 +49,7 @@ class CharactersViewModel @Inject constructor(
                     loadNextPage()
                 }
             }
+
             CharacterListAction.Retry -> {
                 retry()
             }
@@ -83,19 +84,18 @@ class CharactersViewModel @Inject constructor(
     }
 
     /**
-     * Requests the next page of characters and updates ViewModel state.
+     * Requests the next page of characters and updates the ViewModel state.
      *
-     * - Returns immediately if a load is already in progress.
-     * - Sets [isLoadingMore] while the request is active and ensures it is cleared in a `finally` block.
-     * - Launches the request in [viewModelScope] on [mainDispatcher].
-     *
-     * Success:
-     * - Calls [handleSuccessfulLoad] with the received [PaginatedCharacter] and increments [currentPage].
-     *
-     * Error handling:
-     * - [NoMoreCharactersException] -> [handleNoMoreCharacters]
-     * - [NetworkUnavailableException] -> [handleNetworkError]
-     * - Any other [Exception] -> [handleUnknownError]
+     * This function performs the following steps:
+     * 1. Prevents duplicate requests by checking [isLoadingMore].
+     * 2. Sets [isLoadingMore] to true and launches a coroutine on [mainDispatcher].
+     * 3. Executes the [requestNextPageOfCharacters] use case using [currentPage].
+     * 4. On success: Updates the state via [handleSuccessfulLoad] and increments [currentPage].
+     * 5. On failure: Maps the [UseCaseResult.Reason] to specific error handlers:
+     *    - [UseCaseResult.Reason.NoMoreCharacters] -> [handleNoMoreCharacters]
+     *    - [UseCaseResult.Reason.NoInternet] -> [handleNetworkError]
+     *    - [UseCaseResult.Reason.Unknown] -> [handleUnknownError]
+     * 6. Ensures [isLoadingMore] is reset to false once the operation completes.
      */
     private fun loadNextPage() {
         if (isLoadingMore) return
@@ -103,19 +103,21 @@ class CharactersViewModel @Inject constructor(
         isLoadingMore = true
 
         viewModelScope.launch(mainDispatcher) {
-            try {
-                val result = requestNextPageOfCharacters(currentPage)
-                handleSuccessfulLoad(result)
-                currentPage++
-            } catch (e: NoMoreCharactersException) {
-                handleNoMoreCharacters()
-            } catch (e: NetworkUnavailableException) {
-                handleNetworkError()
-            } catch (e: Exception) {
-                handleUnknownError(e)
-            } finally {
-                isLoadingMore = false
+            when (val result = requestNextPageOfCharacters(currentPage)) {
+                is UseCaseResult.Success -> {
+                    handleSuccessfulLoad(result.data)
+                    currentPage++
+                }
+
+                is UseCaseResult.Failure -> {
+                    when (result.reason) {
+                        UseCaseResult.Reason.NoMoreCharacters -> handleNoMoreCharacters()
+                        UseCaseResult.Reason.NoInternet -> handleNetworkError()
+                        is UseCaseResult.Reason.Unknown -> handleUnknownError(Exception())
+                    }
+                }
             }
+            isLoadingMore = false
         }
     }
 

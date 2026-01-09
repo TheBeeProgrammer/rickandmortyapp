@@ -63,6 +63,18 @@ fun CharactersScreen(
     )
 }
 
+/**
+ * The stateless version of the [CharactersScreen] that displays the list of characters.
+ *
+ * This composable handles the layout of the screen, including the [TopAppBar], [SnackbarHost]
+ * for error messaging, and the main content area. It also reacts to [CharacterListEvent]s
+ * emitted by the [events] flow.
+ *
+ * @param state The current [CharacterListState] to be displayed.
+ * @param events A [Flow] of [CharacterListEvent] used to handle one-time UI events like showing snackbars.
+ * @param onAction A callback function to handle user or UI actions defined in [CharacterListAction].
+ * @param modifier The [Modifier] to be applied to the layout.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharactersScreen(
