@@ -1,7 +1,7 @@
 package com.renato.data.repository.base
 
 import com.renato.domain.model.NetworkUnavailableException
-import com.renato.domain.usecases.UseCaseResult
+import com.renato.domain.usecases.base.UseCaseResult
 import retrofit2.HttpException
 import kotlin.coroutines.cancellation.CancellationException
 

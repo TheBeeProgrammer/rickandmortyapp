@@ -1,4 +1,4 @@
-package com.renato.domain.usecases
+package com.renato.domain.usecases.base
 
 /**
  * Represents the result of a use case execution.

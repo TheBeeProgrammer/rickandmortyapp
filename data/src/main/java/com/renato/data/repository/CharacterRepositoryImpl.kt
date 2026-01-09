@@ -1,8 +1,10 @@
 package com.renato.data.repository
 
 import com.renato.data.api.RickAndMortyApiService
-import com.renato.data.mapper.CharacterListResponseMapper
+import com.renato.data.api.entities.CharacterListResponse
+import com.renato.data.mapper.Mapper
 import com.renato.data.repository.base.BaseRepository
+import com.renato.domain.model.character.PaginatedCharacter
 import com.renato.domain.repositories.CharacterRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.flowOf
@@ -20,7 +22,7 @@ class CharacterRepositoryImpl
 constructor(
     private val apiService: RickAndMortyApiService,
     private val ioDispatcher: CoroutineDispatcher,
-    private val mapper: CharacterListResponseMapper,
+    private val mapper: Mapper<CharacterListResponse, PaginatedCharacter>,
 ) : CharacterRepository, BaseRepository() {
 
     override suspend fun requestCharacters(page: Int) = safeCall {

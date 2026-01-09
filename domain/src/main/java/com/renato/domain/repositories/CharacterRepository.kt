@@ -1,7 +1,7 @@
 package com.renato.domain.repositories
 
 import com.renato.domain.model.character.PaginatedCharacter
-import com.renato.domain.usecases.UseCaseResult
+import com.renato.domain.usecases.base.UseCaseResult
 import kotlinx.coroutines.flow.Flow
 
 interface CharacterRepository {
