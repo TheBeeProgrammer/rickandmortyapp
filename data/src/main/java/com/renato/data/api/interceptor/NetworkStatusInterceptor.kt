@@ -1,5 +1,6 @@
 package com.renato.data.api.interceptor
 
+import androidx.annotation.RequiresPermission
 import com.renato.domain.model.NetworkUnavailableException
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -20,6 +21,7 @@ import javax.inject.Inject
  */
 class NetworkStatusInterceptor @Inject constructor(private val connectionManager: ConnectionManager) :
     Interceptor {
+    @RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
     override fun intercept(chain: Interceptor.Chain): Response {
         return if (connectionManager.isConnected()) {
             chain.proceed(chain.request())

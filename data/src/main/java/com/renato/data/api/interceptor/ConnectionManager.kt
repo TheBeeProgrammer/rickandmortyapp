@@ -3,6 +3,7 @@ package com.renato.data.api.interceptor
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import androidx.annotation.RequiresPermission
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -22,6 +23,7 @@ class ConnectionManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
+    @RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
     fun isConnected(): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
